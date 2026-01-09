@@ -52,26 +52,40 @@ class MainActivity: FlutterActivity() {
 
     private fun getCpuTemperature(time: Double): Double {
         // Try reading from common thermal zones
-        val thermalPaths = listOf(
-            "/sys/class/thermal/thermal_zone0/temp",
-            "/sys/devices/virtual/thermal/thermal_zone0/temp"
-        )
-
-        for (path in thermalPaths) {
+        // Iterate through thermal zones (usually 0 to 20 depending on device)
+        for (i in 0..20) {
+            val path = "/sys/class/thermal/thermal_zone$i"
             try {
-                val file = File(path)
-                if (file.exists()) {
-                     val content = file.readText().trim()
-                     val temp = content.toDoubleOrNull()
-                     if (temp != null) {
-                         // Some devices report in millidegrees
-                         return if (temp > 1000) temp / 1000.0 else temp
-                     }
+                val typeFile = File("$path/type")
+                val tempFile = File("$path/temp")
+
+                if (typeFile.exists() && tempFile.exists()) {
+                    val type = typeFile.readText().trim().lowercase()
+                    
+                    // Prioritize known CPU thermal zone names
+                    if (type.contains("cpu") || type.contains("mtktscpu") || type.contains("ap")) {
+                         val content = tempFile.readText().trim()
+                         val temp = content.toDoubleOrNull()
+                         if (temp != null) {
+                             // Standardize: If > 1000, it's millidegrees (e.g., 45000 -> 45.0)
+                             return if (temp > 1000) temp / 1000.0 else temp
+                         }
+                    }
                 }
             } catch (e: Exception) {
-                // Ignore and try next or fallback
+                // Continue to next zone if permission denied or empty
             }
         }
+        
+        // Secondary pass: If no explicit CPU sensor found, try zone0 as generic backup
+        try {
+             val tempFile = File("/sys/class/thermal/thermal_zone0/temp")
+             if (tempFile.exists()) {
+                 val content = tempFile.readText().trim()
+                 val temp = content.toDoubleOrNull()
+                 if (temp != null) return if (temp > 1000) temp / 1000.0 else temp
+             }
+        } catch (e: Exception) {}
 
         // Fallback: Simulate temperature oscillation between 30C and 80C
         // using a sine wave for demonstration if real sensor is unavailable
