@@ -33,8 +33,42 @@ class ControlPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               FilledButton.tonalIcon(
-                onPressed: () {
-                  context.read<QueueBloc>().add(const AddTask('New Task'));
+                onPressed: () async {
+                  final controller = TextEditingController();
+                  final name = await showDialog<String>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('New Task'),
+                      content: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter task name',
+                        ),
+                        onSubmitted: (value) {
+                             Navigator.pop(context, value);
+                        },
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                             Navigator.pop(context, controller.text);
+                          },
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (name != null && name.isNotEmpty) {
+                    if (context.mounted) {
+                        context.read<QueueBloc>().add(AddTask(name));
+                    }
+                  }
                 },
                 icon: const Icon(Icons.add),
                 label: const Text('Add Task'),
