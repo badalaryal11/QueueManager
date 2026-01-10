@@ -48,11 +48,13 @@ class RestartAll extends QueueEvent {
   List<Object> get props => [];
 }
 
-class TemperatureUpdated extends QueueEvent {
-  final double temperature;
-  const TemperatureUpdated(this.temperature);
+
+class SystemResourcesUpdated extends QueueEvent {
+  final double cpuUsage;
+  final double ramUsage;
+  const SystemResourcesUpdated(this.cpuUsage, this.ramUsage);
   @override
-  List<Object> get props => [temperature];
+  List<Object> get props => [cpuUsage, ramUsage];
 }
 
 class ProcessorMessageReceived extends QueueEvent {
@@ -73,35 +75,39 @@ class QueueLoading extends QueueState {
 
 class QueueLoaded extends QueueState {
   final List<QueueTask> tasks;
-  final double temperature;
+  final double cpuUsage;
+  final double ramUsage;
   final bool isPaused;
-  final bool isOverheated;
+  final bool isOverloaded;
   final int processingTaskId; // ID of task currently being processed
 
   const QueueLoaded({
     this.tasks = const [],
-    this.temperature = 0.0,
+    this.cpuUsage = 0.0,
+    this.ramUsage = 0.0,
     this.isPaused = false,
-    this.isOverheated = false,
+    this.isOverloaded = false,
     this.processingTaskId = -1,
   });
 
   QueueLoaded copyWith({
     List<QueueTask>? tasks,
-    double? temperature,
+    double? cpuUsage,
+    double? ramUsage,
     bool? isPaused,
-    bool? isOverheated,
+    bool? isOverloaded,
     int? processingTaskId,
   }) {
     return QueueLoaded(
       tasks: tasks ?? this.tasks,
-      temperature: temperature ?? this.temperature,
+      cpuUsage: cpuUsage ?? this.cpuUsage,
+      ramUsage: ramUsage ?? this.ramUsage,
       isPaused: isPaused ?? this.isPaused,
-      isOverheated: isOverheated ?? this.isOverheated,
+      isOverloaded: isOverloaded ?? this.isOverloaded,
       processingTaskId: processingTaskId ?? this.processingTaskId,
     );
   }
 
   @override
-  List<Object> get props => [tasks, temperature, isPaused, isOverheated, processingTaskId];
+  List<Object> get props => [tasks, cpuUsage, ramUsage, isPaused, isOverloaded, processingTaskId];
 }

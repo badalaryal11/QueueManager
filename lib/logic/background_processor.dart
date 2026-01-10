@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 enum WorkerCommand { start, pause, resume, terminate, processTask }
-enum WorkerEvent { taskCompleted, ready }
+enum WorkerEvent { taskCompleted, ready, started, paused, resumed }
 
 class WorkerMessage {
   final WorkerCommand command;
@@ -21,11 +21,15 @@ class BackgroundProcessor {
   SendPort? _sendPort;
   final StreamController<MainMessage> _mainStreamController = StreamController.broadcast();
   bool _isPaused = false;
+  bool _isStarted = false;
 
   Stream<MainMessage> get messages => _mainStreamController.stream;
   bool get isPaused => _isPaused;
+  bool get isStarted => _isStarted;
 
   Future<void> start() async {
+    if (_isolate != null) return; // Already started
+    
     final receivePort = ReceivePort();
     _isolate = await Isolate.spawn(_isolateEntry, receivePort.sendPort);
     
@@ -35,21 +39,30 @@ class BackgroundProcessor {
         _sendPort?.send(WorkerMessage(WorkerCommand.start));
       } else if (message is MainMessage) {
         _mainStreamController.add(message);
+        if (message.event == WorkerEvent.started) {
+          _isStarted = true;
+          _isPaused = false;
+        }
       }
     });
   }
 
   void processTask(int taskId, String title) {
-    if (_sendPort == null) return;
+    if (_sendPort == null) {
+        print('Error: Processor not started');
+        return;
+    }
     _sendPort!.send(WorkerMessage(WorkerCommand.processTask, {'id': taskId, 'title': title}));
   }
 
   void pause() {
+    if (_isPaused) return;
     _isPaused = true;
     _sendPort?.send(WorkerMessage(WorkerCommand.pause));
   }
 
   void resume() {
+    if (!_isPaused) return;
     _isPaused = false;
     _sendPort?.send(WorkerMessage(WorkerCommand.resume));
   }
@@ -59,7 +72,10 @@ class BackgroundProcessor {
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
     _sendPort = null;
-    _mainStreamController.close();
+    _isStarted = false;
+    // _mainStreamController.close(); // Do not close if we plan to restart?
+    // Good practice: If terminating for good, close. If just stopping engine, maybe keep stream?
+    // Let's keep stream open for simplicity in Bloc, or Bloc should handle re-subscription.
   }
 
   static void _isolateEntry(SendPort sendPort) {
@@ -68,26 +84,25 @@ class BackgroundProcessor {
 
     bool isPaused = false;
 
-    // We can simulate a queue inside the isolate if we want, 
-    // or just process what we are given immediately.
-    // Requirement: "Process tasks one by one".
-    // If we receive a task while processing, we should probably queue it or reject it? 
-    // The Main Isolate should probably control the flow: Send Task -> Wait for Completion -> Send Next.
-    
     receivePort.listen((dynamic message) async {
       if (message is WorkerMessage) {
         switch (message.command) {
           case WorkerCommand.start:
             print('Isolate: Started');
+            sendPort.send(MainMessage(WorkerEvent.started));
             sendPort.send(MainMessage(WorkerEvent.ready));
             break;
           case WorkerCommand.pause:
             print('Isolate: Paused');
             isPaused = true;
+            sendPort.send(MainMessage(WorkerEvent.paused));
             break;
           case WorkerCommand.resume:
             print('Isolate: Resumed');
             isPaused = false;
+            sendPort.send(MainMessage(WorkerEvent.resumed));
+            // Trigger a ready check or just wait for next task?
+            // If we were blocked, the loop continues.
             break;
           case WorkerCommand.terminate:
             print('Isolate: Terminating');
@@ -98,20 +113,23 @@ class BackgroundProcessor {
             final id = data['id'] as int;
             final title = data['title'] as String;
             
-            // Wait if paused
+            // Wait if paused *before* starting
             while (isPaused) {
               await Future.delayed(Duration(milliseconds: 500));
             }
 
             print('Isolate: Processing task $id - $title');
             
-            // Simulate work
-            await Future.delayed(Duration(seconds: 3));
+            // Simulate heavy work (e.g. 2 seconds)
+            // Break it down to check for pause?
+            for (int i = 0; i < 20; i++) {
+                while (isPaused) {
+                    await Future.delayed(Duration(milliseconds: 500));
+                }
+                await Future.delayed(Duration(milliseconds: 100)); // 0.1s * 20 = 2s
+            }
             
-            // Check paused again before finishing? 
-            // Usually valid to finish ongoing task.
-            
-            print('Isolate: Type check complete for $id');
+            print('Isolate: Task complete for $id');
             sendPort.send(MainMessage(WorkerEvent.taskCompleted, id));
             sendPort.send(MainMessage(WorkerEvent.ready));
             break;

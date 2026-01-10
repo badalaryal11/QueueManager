@@ -6,7 +6,7 @@ import '../logic/queue_bloc.dart';
 import '../logic/queue_state_event.dart';
 import 'widgets/control_panel.dart';
 import 'widgets/task_list_item.dart';
-import 'widgets/temperature_widget.dart';
+import 'widgets/system_resource_widget.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -20,7 +20,7 @@ class MainScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const TemperatureWidget(),
+          const SystemResourceWidget(),
           const ControlPanel(),
           Expanded(
             child: BlocBuilder<QueueBloc, QueueState>(
