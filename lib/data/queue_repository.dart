@@ -121,4 +121,10 @@ class QueueRepository {
     _writeCountController.add(_writeCount);
     print('Database Write Count: $_writeCount');
   }
+
+  Future<void> deleteCompletedTasks() async {
+    _incrementWriteCount();
+    // Using .index because generated code typically expects the integer value for intEnum columns in where clauses
+    await (_db.delete(_db.queueTasks)..where((t) => t.status.equals(TaskStatus.completed.index))).go();
+  }
 }

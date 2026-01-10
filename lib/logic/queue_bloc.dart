@@ -83,23 +83,7 @@ class QueueBloc extends Bloc<QueueEvent, QueueState> {
   }
 
   Future<void> _onClearCompleted(ClearCompleted event, Emitter<QueueState> emit) async {
-    if (state is QueueLoaded) {
-      final s = state as QueueLoaded;
-      // Optimistic or waiting for DB? DB is source of truth.
-      // We should ideally add a delete method to repository.
-      // For now, let's just find completed tasks and delete them one by one or batch?
-      // Since drift generated code is available, we can assume delete works.
-      // But we need to add delete method to repo.
-      // Assuming for now we iterate (inefficient but works for 20 items).
-      for (var task in s.tasks) {
-        if (task.status == TaskStatus.completed) {
-           await _repository.updateTaskStatus(task.id, TaskStatus.completed); // Wait, this is update.. need delete.
-           // Actually, the requirements said "Clear completed tasks button", implying delete.
-           // I'll add a delete method to repo or just ignore for now and fix later.
-           // Let's assume delete logic is needed. Use _repository helper if I can, or add it.
-        }
-      }
-    }
+    await _repository.deleteCompletedTasks();
   }
   
   Future<void> _onRestartAll(RestartAll event, Emitter<QueueState> emit) async {
