@@ -36,7 +36,7 @@ class QueueBloc extends Bloc<QueueEvent, QueueState> {
     });
 
     _resourceSubscription = _resourceService.resourceStream.listen((resources) {
-      add(SystemResourcesUpdated(resources.cpuUsage, resources.ramUsage));
+      add(SystemResourcesUpdated(resources.cpuUsage, resources.ramUsage, resources.temperature));
     });
 
     _processorSubscription = _processor.messages.listen((msg) {
@@ -129,6 +129,7 @@ class QueueBloc extends Bloc<QueueEvent, QueueState> {
       final newState = s.copyWith(
         cpuUsage: event.cpuUsage,
         ramUsage: event.ramUsage,
+        temperature: event.temperature,
         isOverloaded: isOverloaded,
         isPaused: isPaused,
       );

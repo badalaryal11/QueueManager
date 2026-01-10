@@ -48,13 +48,13 @@ class RestartAll extends QueueEvent {
   List<Object> get props => [];
 }
 
-
 class SystemResourcesUpdated extends QueueEvent {
   final double cpuUsage;
   final double ramUsage;
-  const SystemResourcesUpdated(this.cpuUsage, this.ramUsage);
+  final double temperature;
+  const SystemResourcesUpdated(this.cpuUsage, this.ramUsage, this.temperature);
   @override
-  List<Object> get props => [cpuUsage, ramUsage];
+  List<Object> get props => [cpuUsage, ramUsage, temperature];
 }
 
 class ProcessorMessageReceived extends QueueEvent {
@@ -77,6 +77,7 @@ class QueueLoaded extends QueueState {
   final List<QueueTask> tasks;
   final double cpuUsage;
   final double ramUsage;
+  final double temperature;
   final bool isPaused;
   final bool isOverloaded;
   final int processingTaskId; // ID of task currently being processed
@@ -85,6 +86,7 @@ class QueueLoaded extends QueueState {
     this.tasks = const [],
     this.cpuUsage = 0.0,
     this.ramUsage = 0.0,
+    this.temperature = 0.0,
     this.isPaused = false,
     this.isOverloaded = false,
     this.processingTaskId = -1,
@@ -94,6 +96,7 @@ class QueueLoaded extends QueueState {
     List<QueueTask>? tasks,
     double? cpuUsage,
     double? ramUsage,
+    double? temperature,
     bool? isPaused,
     bool? isOverloaded,
     int? processingTaskId,
@@ -102,6 +105,7 @@ class QueueLoaded extends QueueState {
       tasks: tasks ?? this.tasks,
       cpuUsage: cpuUsage ?? this.cpuUsage,
       ramUsage: ramUsage ?? this.ramUsage,
+      temperature: temperature ?? this.temperature,
       isPaused: isPaused ?? this.isPaused,
       isOverloaded: isOverloaded ?? this.isOverloaded,
       processingTaskId: processingTaskId ?? this.processingTaskId,
@@ -109,5 +113,5 @@ class QueueLoaded extends QueueState {
   }
 
   @override
-  List<Object> get props => [tasks, cpuUsage, ramUsage, isPaused, isOverloaded, processingTaskId];
+  List<Object> get props => [tasks, cpuUsage, ramUsage, temperature, isPaused, isOverloaded, processingTaskId];
 }

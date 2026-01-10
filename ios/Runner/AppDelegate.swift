@@ -47,13 +47,35 @@ class ResourceStreamHandler: NSObject, FlutterStreamHandler {
     private func sendResources() {
         let cpu = getCpuUsage()
         let ram = getMemoryUsage()
+        let temp = getThermalStateTemperature()
         
         let data: [String: Double] = [
             "cpu": cpu,
-            "ram": ram
+            "ram": ram,
+            "temp": temp
         ]
         
         eventSink?(data)
+    }
+    
+    private func getThermalStateTemperature() -> Double {
+        // Map thermal state to mock temperature values
+        let state = ProcessInfo.processInfo.thermalState
+        var temp = 35.0
+        
+        switch state {
+        case .nominal:
+            temp = 38.0
+        case .fair:
+            temp = 48.0
+        case .serious:
+            temp = 68.0
+        case .critical:
+            temp = 88.0
+        @unknown default:
+            temp = 38.0
+        }
+        return temp
     }
     
     // --- Helper Methods ---

@@ -22,12 +22,13 @@ class SystemResourceWidget extends StatelessWidget {
         if (state is QueueLoaded) {
           final cpu = state.cpuUsage;
           final ram = state.ramUsage;
+          final temp = state.temperature;
           final isOverloaded = state.isOverloaded;
 
           Color color = Colors.green;
           if (isOverloaded) {
             color = Colors.red;
-          } else if (cpu > 60.0 || ram > 60.0) {
+          } else if (cpu > 60.0 || ram > 60.0 || temp > 60.0) {
             color = Colors.orange;
           }
 
@@ -50,6 +51,8 @@ class SystemResourceWidget extends StatelessWidget {
                   _buildIndicator(context, 'CPU', cpu, color),
                   const SizedBox(height: 8),
                   _buildIndicator(context, 'RAM', ram, color),
+                  const SizedBox(height: 8),
+                  _buildTempIndicator(context, 'Temp', temp, color),
                 ],
               ),
             ),
@@ -73,8 +76,30 @@ class SystemResourceWidget extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             SizedBox(
-                width: 50, 
+                width: 60, 
                 child: Text('${value.toStringAsFixed(1)}%', textAlign: TextAlign.end),
+            ),
+        ],
+      );
+  }
+
+  Widget _buildTempIndicator(BuildContext context, String label, double value, Color color) {
+      // Temp usually ranges 30-100 C. Normalize 0-100 for bar? 
+      // Or just show value. User wanted "CPU Temperature".
+      return Row(
+        children: [
+            SizedBox(width: 40, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
+            Expanded(
+                child: LinearProgressIndicator(
+                    value: (value).clamp(0.0, 100.0) / 100.0, 
+                    color: color,
+                    backgroundColor: Colors.grey.shade200,
+                ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+                width: 60, 
+                child: Text('${value.toStringAsFixed(1)}°C', textAlign: TextAlign.end),
             ),
         ],
       );
