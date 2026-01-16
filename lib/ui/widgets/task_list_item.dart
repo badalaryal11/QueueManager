@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../data/database.dart';
 
@@ -43,13 +42,15 @@ class TaskListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       elevation: isProcessing ? 4 : 1,
       shape: RoundedRectangleBorder(
-        side: isProcessing ? const BorderSide(color: Colors.blue, width: 2) : BorderSide.none,
+        side: isProcessing
+            ? const BorderSide(color: Colors.blue, width: 2)
+            : BorderSide.none,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: statusColor.withOpacity(0.2),
+          backgroundColor: statusColor.withValues(alpha: 0.2),
           child: Icon(statusIcon, color: statusColor),
         ),
         title: Text(
